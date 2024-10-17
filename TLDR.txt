@@ -1,0 +1,9 @@
+1. Esegui:
+
+python app.py
+
+2. Apri un browser e vai su 127.0.0.1:5000
+
+3. Aggiorna dati
+
+4. Enjoy

@@ -1,0 +1,8 @@
+nmap
+requests
+mac-vendor-lookup
+miniupnpc
+cryptography
+weasyprint
+jinja2
+Flask==2.3.2

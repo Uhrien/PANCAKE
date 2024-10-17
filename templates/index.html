@@ -1,0 +1,153 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Analisi Rete Locale</title>
+    <!-- Bootswatch Darkly Theme -->
+    <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.2/dist/darkly/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container my-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Analisi Rete Locale</h1>
+            <button id="update-btn" class="btn btn-primary" {% if scan_in_progress %}disabled{% endif %}>
+                {% if scan_in_progress %}
+                    Aggiornamento in corso...
+                {% else %}
+                    Aggiorna Dati
+                {% endif %}
+            </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="progress-container" class="mb-4" {% if not scan_in_progress %}style="display: none;"{% endif %}>
+            <div class="progress">
+                <div id="progress-bar" class="progress-bar" role="progressbar" style="width: {{ scan_progress.percentage }}%;" aria-valuenow="{{ scan_progress.percentage }}" aria-valuemin="0" aria-valuemax="100">{{ scan_progress.percentage }}%</div>
+            </div>
+            <p class="mt-2 text-center">{{ scan_progress.message }}</p>
+        </div>
+
+        {% if devices %}
+            <div class="row" id="devices-container">
+                {% for device in devices %}
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h5 class="card-title">{{ device.IP }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>MAC:</strong> {{ device.MAC }}</p>
+                                <p><strong>Vendor:</strong> {{ device.Vendor }}</p>
+                                <p><strong>Hostname:</strong> {{ device.Hostname }}</p>
+                                
+                                {% if device.Ports %}
+                                    <h6>Porte Aperte:</h6>
+                                    <ul>
+                                        {% for port, details in device.Ports.items() %}
+                                            <li>
+                                                <strong>{{ port }}</strong> - Stato: {{ details.state }}<br>
+                                                Servizio: {{ details.service if details.service else "N/A" }}<br>
+                                                Versione: {{ details.version if details.version else "N/A" }}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p><em>Nessuna porta aperta rilevata.</em></p>
+                                {% endif %}
+                                
+                                {% if device.OS != "Non determinato" %}
+                                    <h6>Sistema Operativo:</h6>
+                                    <ul>
+                                        {% for os in device.OS %}
+                                            <li>
+                                                {{ os.Name }} (Precisione: {{ os.Accuracy }}%)
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p><em>Sistema Operativo non determinato.</em></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center">
+                <p>Nessun dispositivo trovato. Premi il pulsante "Aggiorna Dati" per iniziare la scansione.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JQuery (opzionale, per facilitare le chiamate AJAX) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        document.getElementById('update-btn').addEventListener('click', function() {
+            const button = this;
+            button.disabled = true;
+            button.innerText = 'Aggiornamento in corso...';
+            
+            // Mostra il progress bar
+            const progressContainer = document.getElementById('progress-container');
+            progressContainer.style.display = 'block';
+            const progressBar = document.getElementById('progress-bar');
+            const progressMessage = progressContainer.querySelector('p');
+            progressBar.style.width = '0%';
+            progressBar.setAttribute('aria-valuenow', '0');
+            progressBar.innerText = '0%';
+            progressMessage.innerText = 'Avvio della scansione...';
+
+            fetch('/api/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({})  // Puoi aggiungere parametri come prefix, ports, verbosity se necessario
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "Scan started") {
+                    // Inizia a monitorare il progresso
+                    const interval = setInterval(() => {
+                        fetch('/api/progress')
+                            .then(response => response.json())
+                            .then(progress => {
+                                progressBar.style.width = progress.percentage + '%';
+                                progressBar.setAttribute('aria-valuenow', progress.percentage);
+                                progressBar.innerText = progress.percentage + '%';
+                                progressMessage.innerText = progress.message;
+                                
+                                if (progress.status === 'Completed' || progress.status === 'Error') {
+                                    clearInterval(interval);
+                                    // Nascondi la progress bar dopo un breve ritardo
+                                    setTimeout(() => {
+                                        progressContainer.style.display = 'none';
+                                    }, 2000);
+                                    
+                                    // Ricarica la pagina per mostrare i nuovi dati
+                                    setTimeout(() => {
+                                        location.reload();
+                                    }, 2000);
+                                }
+                            });
+                    }, 1000);  // Controlla ogni secondo
+                } else {
+                    button.disabled = false;
+                    button.innerText = 'Aggiorna Dati';
+                    alert(data.status);
+                }
+            })
+            .catch((error) => {
+                console.error('Errore:', error);
+                button.disabled = false;
+                button.innerText = 'Aggiorna Dati';
+            });
+        });
+    </script>
+</body>
+</html>

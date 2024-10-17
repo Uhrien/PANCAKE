@@ -1,0 +1,54 @@
+/* static/css/styles.css */
+
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+.card {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transizione fluida */
+}
+
+.card:hover {
+    transform: scale(1.02);
+    box-shadow: 
+        0 0 5px #007700,    /* Bagliore leggero */
+        0 0 10px #007700,   /* Bagliore medio */
+        0 0 15px #007700,   /* Bagliore forte */
+        0 0 20px #007700,   /* Bagliore molto forte */
+        0 0 25px #007700;   /* Bagliore ultra forte */
+}
+
+.card-header {
+    background-color: #333;
+    border-bottom: 1px solid #444;
+}
+
+.card-title {
+    color: #fff;
+}
+
+ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+li {
+    margin-bottom: 10px;
+}
+
+.btn-primary {
+    background-color: #6200ee;
+    border-color: #6200ee;
+}
+
+.btn-primary:hover {
+    background-color: #3700b3;
+    border-color: #3700b3;
+}
+
+.progress-bar {
+    transition: width 1s ease; /* Mantieni la transizione esistente */
+}
